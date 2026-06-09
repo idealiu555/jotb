@@ -121,9 +121,12 @@ def plot_metric_bar(
 
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     fig.tight_layout()
-    fig.savefig(output_path, format="svg")
+    for fmt in ("svg", "pdf"):
+        path_no_ext = os.path.splitext(output_path)[0]
+        out = f"{path_no_ext}.{fmt}"
+        fig.savefig(out, format=fmt)
+        print(f"saved: {out}")
     plt.close(fig)
-    print(f"saved: {output_path}")
 
 
 def plot_algorithm_comparison(
@@ -141,7 +144,7 @@ def plot_algorithm_comparison(
 
     for metric in METRIC_CONFIG:
         values = [summary[metric] for summary in summaries]
-        output_path = os.path.join(output_dir, f"{prefix}_{metric}.svg")
+        output_path = os.path.join(output_dir, f"{prefix}_{metric}")
         plot_metric_bar(labels, values, metric, output_path)
 
 

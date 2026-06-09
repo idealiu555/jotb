@@ -49,7 +49,7 @@ UNSAFE_UAV_DISTANCE: float = 50.0
 COLLISION_DISTANCE: float = 5.0
 UNSAFE_PROXIMITY_PENALTY: float = 4.0
 COLLISION_FAILURE_PENALTY: float = 10.0
-BOUNDARY_PENALTY: float = 4.0
+BOUNDARY_PENALTY: float = 2.0
 NON_SERVED_LATENCY_PENALTY: float = 60.0  # penalty in latency for non-served requests
 # IMPORTANT : Reconfigurable, should try for various values including : NUM_UAVS - 1 and NUM_UES
 MAX_UAV_NEIGHBORS: int = min(4, NUM_UAVS - 1)
@@ -187,15 +187,15 @@ INITIAL_RANDOM_STEPS: int = 40000  # steps of random actions for exploration
 LEARN_FREQ: int = 10  # steps to learn after
 
 # Gaussian Noise Parameters (for MADDPG and MATD3)
-INITIAL_NOISE_SCALE: float = 0.2
-MIN_NOISE_SCALE: float = 0.05
-NOISE_DECAY_RATE: float = 0.997
+INITIAL_NOISE_SCALE: float = 0.4
+MIN_NOISE_SCALE: float = 0.1
+NOISE_DECAY_RATE: float = 0.999
 BEAM_NOISE_RATIO: float = 0.5  # 波束动作噪声相对于位移动作噪声的比例
 
 # MATD3 Specific Hyperparameters
 POLICY_UPDATE_FREQ: int = 2  # delayed policy update frequency (TD3 typically uses 2)
-TARGET_POLICY_NOISE: float = 0.2  # standard deviation of target policy smoothing noise.
-NOISE_CLIP: float = 0.5  # range to clip target policy smoothing noise
+TARGET_POLICY_NOISE: float = 0.5  # standard deviation of target policy smoothing noise.
+NOISE_CLIP: float = 1.0  # range to clip target policy smoothing noise
 
 # MAPPO Specific Hyperparameters
 PPO_ROLLOUT_LENGTH: int = 1000  # number of steps to collect per rollout (Set to STEPS_PER_EPISODE for episodic tasks)
@@ -221,6 +221,6 @@ MASAC_AGENT_ATTENTION_DIM: int = 512  # agent self-attention hidden dimension
 MASAC_AGENT_ATTENTION_HEADS: int = 4  # heads=4, head_dim=128
 MASAC_AGENT_ATTENTION_LAYERS: int = 2  # number of self-attention blocks
 MASAC_AGENT_ATTENTION_FFN_MULT: int = 4  # FFN hidden multiplier
-ALPHA_MIN: float = 2e-3  # lower bound for entropy temperature to avoid collapsing exploration entirely
-TARGET_ENTROPY_SCALE: float = 0.6  # scales the default SAC target entropy of -action_dim
-ALPHA_LR: float = 2e-4  # learning rate for the entropy temperature alpha
+ALPHA_MIN: float = 1e-3  # lower bound for entropy temperature to avoid collapsing exploration entirely
+TARGET_ENTROPY_SCALE: float = 0.5  # scales the default SAC target entropy of -action_dim
+ALPHA_LR: float = 3e-4  # learning rate for the entropy temperature alpha
