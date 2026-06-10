@@ -21,8 +21,7 @@ from typing import Optional
 ACADEMIC_STYLE = {
     'figure.figsize': (8, 6),
     'figure.dpi': 150,
-    'font.family': 'serif',
-    'font.serif': ['Times New Roman', 'DejaVu Serif'],
+    'font.family': 'Times New Roman',
     'font.size': 12,
     'axes.titlesize': 14,
     'axes.labelsize': 13,
@@ -40,13 +39,13 @@ ACADEMIC_STYLE = {
     'savefig.pad_inches': 0.1,
 }
 
-# 学术配色方案 (colorblind-friendly)
+# 统一论文图调色板
 COLORS = {
-    'primary': '#C73E1D',      # 红色
-    'secondary': '#dd6969',    # 淡红
-    'tertiary': '#F18F01',     # 橙色
-    'quaternary': '#3580b8',   # 蓝色
-    'success': '#3A7D44',      # 绿色
+    'primary': '#e18283',
+    'secondary': '#f6ad98',
+    'tertiary': '#facd9d',
+    'quaternary': '#bdb6e4',
+    'success': '#bcd1c4',
 }
 
 

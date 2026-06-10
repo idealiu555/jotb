@@ -5,10 +5,20 @@ from mpl_toolkits.mplot3d import Axes3D
 import os
 import numpy as np
 
+PLOT_COLORS = {
+    "ground_ue": "#bcd1c4",
+    "aerial_ue": "#c9dfe2",
+    "served": "#e18283",
+    "uav": "#f6ad98",
+    "beam": "#facd9d",
+    "collaboration": "#bdb6e4",
+    "link": "#c9dfe2",
+    "mbs": "#bdb6e4",
+}
+
 # Set scientific plotting style
 plt.rcParams.update({
-    'font.family': 'serif',
-    'font.serif': ['Times New Roman', 'DejaVu Serif'],
+    'font.family': 'Times New Roman',
     'font.size': 10,
     'axes.labelsize': 11,
     'axes.titlesize': 13,
@@ -32,8 +42,8 @@ def _draw_sphere_wireframe(ax, center: np.ndarray, radius: float, color: str, al
     ax.plot_wireframe(x, y, z, color=color, alpha=alpha, linewidth=0.5)
 
 
-def _draw_beam_cone(ax, uav_pos: np.ndarray, beam_dir: tuple[float, float], 
-                    length: float = 80.0, color: str = 'tab:orange') -> None:
+def _draw_beam_cone(ax, uav_pos: np.ndarray, beam_dir: tuple[float, float],
+                    length: float = 80.0, color: str = PLOT_COLORS["beam"]) -> None:
     """Draw a simplified line and cone representing the beam direction."""
     theta_rad = np.radians(beam_dir[0])
     phi_rad = np.radians(beam_dir[1])
@@ -83,12 +93,11 @@ def plot_snapshot(env: Env, progress_step: int, step: int, save_dir: str, name: 
     # Plot ground UEs (Black dots)
     if ground_ues:
         ground_pos = np.array([ue.pos for ue in ground_ues])
-        # Base color black
-        colors = ["black"] * len(ground_ues)
-        # Mark served UEs as green
+        colors = [PLOT_COLORS["ground_ue"]] * len(ground_ues)
+        # Mark served UEs with the highlight color.
         for i, ue in enumerate(ground_ues):
             if ue.assigned:
-                colors[i] = "tab:green"
+                colors[i] = PLOT_COLORS["served"]
         
         ax.scatter(ground_pos[:, 0], ground_pos[:, 1], ground_pos[:, 2], 
                    c=colors, marker=".", s=15, label="Ground UEs", alpha=0.6, edgecolors='none')
@@ -96,12 +105,11 @@ def plot_snapshot(env: Env, progress_step: int, step: int, save_dir: str, name: 
     # Plot aerial UEs (Blue dots)
     if aerial_ues:
         aerial_pos = np.array([ue.pos for ue in aerial_ues])
-        # Base color blue
-        colors = ["tab:blue"] * len(aerial_ues)
-        # Mark served UEs as green
+        colors = [PLOT_COLORS["aerial_ue"]] * len(aerial_ues)
+        # Mark served UEs with the highlight color.
         for i, ue in enumerate(aerial_ues):
             if ue.assigned:
-                colors[i] = "tab:green"
+                colors[i] = PLOT_COLORS["served"]
 
         ax.scatter(aerial_pos[:, 0], aerial_pos[:, 1], aerial_pos[:, 2], 
                    c=colors, marker=".", s=25, label="Aerial UEs", alpha=0.7, edgecolors='none')
@@ -112,41 +120,41 @@ def plot_snapshot(env: Env, progress_step: int, step: int, save_dir: str, name: 
         label = "UAV (ABS)" if not uav_plotted else ""
         # UAV position
         ax.scatter(uav.pos[0], uav.pos[1], uav.pos[2], 
-                   c="tab:red", marker="s", s=80, label=label, edgecolors='white', linewidths=0.5, alpha=1.0)
+                   c=PLOT_COLORS["uav"], marker="s", s=80, label=label, edgecolors='white', linewidths=0.5, alpha=1.0)
         uav_plotted = True
         
         # Coverage area (faint)
-        _draw_sphere_wireframe(ax, uav.pos, config.UAV_COVERAGE_RADIUS, "tab:red", alpha=0.1)
+        _draw_sphere_wireframe(ax, uav.pos, config.UAV_COVERAGE_RADIUS, PLOT_COLORS["uav"], alpha=0.1)
         
         # Beam direction
         beam_dir = uav.get_final_beam_direction()
-        _draw_beam_cone(ax, uav.pos, beam_dir, length=config.UAV_COVERAGE_RADIUS * 0.7, color='tab:orange')
+        _draw_beam_cone(ax, uav.pos, beam_dir, length=config.UAV_COVERAGE_RADIUS * 0.7)
 
         # Association Links (very faint)
         for ue in uav.current_covered_ues:
             ax.plot([uav.pos[0], ue.pos[0]], [uav.pos[1], ue.pos[1]], [uav.pos[2], ue.pos[2]], 
-                    color="gray", linestyle="-", linewidth=0.3, alpha=0.3)
+                    color=PLOT_COLORS["link"], linestyle="-", linewidth=0.3, alpha=0.3)
 
         # Collaboration Links
         if uav.current_collaborator:
             ax.plot([uav.pos[0], uav.current_collaborator.pos[0]], 
                     [uav.pos[1], uav.current_collaborator.pos[1]], 
                     [uav.pos[2], uav.current_collaborator.pos[2]], 
-                    color="tab:purple", linestyle="--", linewidth=1.0, alpha=0.7)
+                    color=PLOT_COLORS["collaboration"], linestyle="--", linewidth=1.0, alpha=0.7)
 
     # Plot MBS
     ax.scatter(config.MBS_POS[0], config.MBS_POS[1], config.MBS_POS[2], 
-               c="black", marker="D", s=100, label="MBS", edgecolors='white', linewidths=0.5)
+               c=PLOT_COLORS["mbs"], marker="D", s=100, label="MBS", edgecolors='white', linewidths=0.5)
 
     # Ground plane reference
     xx, yy = np.meshgrid([0, config.AREA_WIDTH], [0, config.AREA_HEIGHT])
-    ax.plot_surface(xx, yy, np.zeros_like(xx), alpha=0.03, color='gray', shade=False)
+    ax.plot_surface(xx, yy, np.zeros_like(xx), alpha=0.03, color=PLOT_COLORS["link"], shade=False)
 
     # View angle
     ax.view_init(elev=25, azim=45)
     
     # Legend
-    ax.legend(loc="upper left", frameon=True, framealpha=0.9, edgecolor='gray', fontsize=9)
+    ax.legend(loc="upper left", frameon=True, framealpha=0.9, edgecolor=PLOT_COLORS["link"], fontsize=9)
 
     # Save
     filename = "initial.png" if initial else f"step_{step:04d}.png"

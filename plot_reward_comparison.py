@@ -26,8 +26,7 @@ from matplotlib.ticker import MaxNLocator
 ACADEMIC_STYLE = {
     "figure.figsize": (9, 6),
     "figure.dpi": 150,
-    "font.family": "serif",
-    "font.serif": ["Times New Roman", "DejaVu Serif"],
+    "font.family": "Times New Roman",
     "font.size": 12,
     "axes.titlesize": 14,
     "axes.labelsize": 13,
@@ -45,15 +44,14 @@ ACADEMIC_STYLE = {
     "savefig.pad_inches": 0.1,
 }
 
-# Colorblind-friendly 调色板
+# 统一论文图调色板
 PALETTE: tuple[str, ...] = (
-    "#C73E1D",  # 红
-    "#3580B8",  # 蓝
-    "#3A7D44",  # 绿
-    "#F18F01",  # 橙
-    "#6F4E9B",  # 紫
-    "#4C6A6D",  # 青
-    "#A23E48",  # 玫红
+    "#e18283",
+    "#f6ad98",
+    "#facd9d",
+    "#bdb6e4",
+    "#c9dfe2",
+    "#bcd1c4",
 )
 
 
@@ -119,7 +117,7 @@ def _plot_algorithm(
     reward: np.ndarray,
     color: str,
     label: str,
-  smoothing: float,
+    smoothing: float,
 ) -> None:
     """在 ax 上绘制单条算法曲线（原始细线 + EMA 粗线）。"""
     # 原始值（半透明细线）
