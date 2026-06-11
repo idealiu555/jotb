@@ -122,9 +122,9 @@ BEAM_OFFSET_RANGE: float = 30.0          # offset模式下的最大偏移范围 
 # Reward weights for multi-objective optimization
 # All weights set to 1.0, relying on SCALE to balance magnitude
 ALPHA_1: float = 1.0  # weightage for latency (penalty)
-ALPHA_2: float = 1.0  # weightage for energy (penalty)
+ALPHA_2: float = 1.25  # weightage for energy (penalty)
 ALPHA_3: float = 1.0  # weightage for fairness/JFI (reward)
-ALPHA_RATE: float = 1.0  # weightage for system throughput (reward)
+ALPHA_RATE: float = 1.0  # diagnostic scale for system throughput (not used in reward)
 REWARD_SCALING_FACTOR: float = 0.12  # scaling factor for rewards (归一化后保持原量级)
 
 # Balanced scales to make log1p(scaled) ≈ 1.5-2.0 for each component
@@ -188,9 +188,9 @@ LEARN_FREQ: int = 10  # steps to learn after
 
 # Gaussian Noise Parameters (for MADDPG and MATD3)
 INITIAL_NOISE_SCALE: float = 0.4
-MIN_NOISE_SCALE: float = 0.1
+MIN_NOISE_SCALE: float = 0.2
 NOISE_DECAY_RATE: float = 0.999
-BEAM_NOISE_RATIO: float = 0.5  # 波束动作噪声相对于位移动作噪声的比例
+BEAM_NOISE_RATIO: float = 0.1  # 波束动作噪声相对于位移动作噪声的比例
 
 # MATD3 Specific Hyperparameters
 POLICY_UPDATE_FREQ: int = 2  # delayed policy update frequency (TD3 typically uses 2)

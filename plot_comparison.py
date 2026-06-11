@@ -361,6 +361,189 @@ def plot_jfi_latency_bubble(
         plt.close(fig)
 
 
+def _label_index(labels: list[str], target: str) -> int | None:
+    target_lower = target.strip().lower()
+    for idx, label in enumerate(labels):
+        if label.strip().lower() == target_lower:
+            return idx
+    return None
+
+
+def plot_energy_latency_bubble(
+    labels: list[str],
+    summaries: list[dict[str, float]],
+    output_dir: str = "model_test/comparison_plots",
+) -> None:
+    """绘制能耗-时延气泡图，气泡大小表示 JFI。"""
+    import matplotlib.pyplot as plt
+
+    energy_vals = [summary["energy"] for summary in summaries]
+    latency_vals = [summary["latency"] for summary in summaries]
+    fairness_vals = [summary["fairness"] for summary in summaries]
+    random_idx = _label_index(labels, "random")
+    axis_indices = [
+        idx for idx in range(len(labels))
+        if random_idx is None or idx != random_idx
+    ]
+    if not axis_indices:
+        axis_indices = list(range(len(labels)))
+    axis_energy_vals = [energy_vals[idx] for idx in axis_indices]
+    axis_latency_vals = [latency_vals[idx] for idx in axis_indices]
+
+    # Map JFI to visual tiers instead of raw differences. The JFI values are often
+    # numerically close, so rank-based sizing makes fairness levels readable.
+    min_bubble_size = 420.0
+    max_bubble_size = 2300.0
+    if len(fairness_vals) > 1:
+        sorted_indices = sorted(range(len(fairness_vals)), key=lambda idx: fairness_vals[idx])
+        size_step = (max_bubble_size - min_bubble_size) / (len(fairness_vals) - 1)
+        bubble_sizes = [min_bubble_size] * len(fairness_vals)
+        for rank, idx in enumerate(sorted_indices):
+            bubble_sizes[idx] = min_bubble_size + rank * size_step
+    else:
+        bubble_sizes = [0.5 * (min_bubble_size + max_bubble_size)]
+
+    with plt.rc_context(CONFERENCE_STYLE):
+        fig, ax = plt.subplots(figsize=(7.3, 5.3))
+        _remove_outer_frame(fig, ax)
+
+        label_offsets = {
+            "amasac": (28, 0, "left", "center"),
+            "masac": (28, 0, "left", "center"),
+            "matd3": (28, 0, "left", "center"),
+            "mappo": (28, 0, "left", "center"),
+            "random": (28, 0, "left", "center"),
+        }
+
+        energy_margin = _value_margin(axis_energy_vals, ratio=0.18, minimum=5.0)
+        lat_margin = _value_margin(axis_latency_vals, ratio=0.16, minimum=80.0)
+        x_min = min(axis_energy_vals) - energy_margin
+        x_max = max(axis_energy_vals) + energy_margin
+        y_min = min(axis_latency_vals) - lat_margin
+        y_max = max(axis_latency_vals) + lat_margin
+        ax.set_xlim(x_min, x_max)
+        ax.set_ylim(y_min, y_max)
+        x_span = x_max - x_min
+        y_span = y_max - y_min
+
+        for i, (label, energy, latency, size) in enumerate(
+            zip(labels, energy_vals, latency_vals, bubble_sizes)
+        ):
+            color = COLORS[i % len(COLORS)]
+            is_outlier = (
+                random_idx is not None
+                and i == random_idx
+                and (energy < x_min or energy > x_max or latency < y_min or latency > y_max)
+            )
+            plot_energy = energy
+            plot_latency = latency
+            plot_label = label
+            if is_outlier:
+                plot_energy = x_max - 0.075 * x_span
+                plot_latency = y_max - 0.090 * y_span
+                plot_label = f"{label}\n(outlier)"
+                ax.annotate(
+                    "",
+                    xy=(x_max - 0.008 * x_span, y_max - 0.008 * y_span),
+                    xytext=(plot_energy, plot_latency),
+                    arrowprops={
+                        "arrowstyle": "-|>",
+                        "color": "#68777D",
+                        "linewidth": 1.2,
+                        "mutation_scale": 11,
+                    },
+                    zorder=2,
+                )
+            ax.scatter(
+                plot_energy,
+                plot_latency,
+                s=size,
+                color=color,
+                alpha=0.94,
+                edgecolors="white",
+                linewidths=1.8,
+                zorder=3,
+            )
+
+            dx, dy, ha, va = label_offsets.get(label.strip().lower(), (12, 0, "left", "center"))
+            ax.annotate(
+                plot_label,
+                xy=(plot_energy, plot_latency),
+                xytext=(dx, dy),
+                textcoords="offset points",
+                ha=ha,
+                va=va,
+                fontsize=11,
+                fontweight="semibold",
+                color=TEXT_COLOR,
+                zorder=4,
+            )
+
+        ax.set_xlabel("Average Energy Consumption (J)", labelpad=8, color=TEXT_COLOR)
+        ax.set_ylabel("Average Latency (s)", labelpad=8, color=TEXT_COLOR)
+        ax.set_title("Energy-Latency-Fairness Trade-off", pad=11, color=TEXT_COLOR)
+
+        _paper_axes(ax)
+        _draw_full_grid(ax)
+
+        arrow_head = (0.055, 0.065)
+        arrow_tail = (0.190, 0.205)
+        head_px = ax.transAxes.transform(arrow_head)
+        tail_px = ax.transAxes.transform(arrow_tail)
+        arrow_text_angle = float(
+            np.degrees(np.arctan2(tail_px[1] - head_px[1], tail_px[0] - head_px[0]))
+        )
+
+        ax.annotate(
+            "",
+            xy=arrow_head,
+            xytext=arrow_tail,
+            xycoords="axes fraction",
+            arrowprops={
+                "arrowstyle": "-|>",
+                "color": "#68777D",
+                "linewidth": 1.2,
+                "mutation_scale": 11,
+                "shrinkA": 0,
+                "shrinkB": 0,
+            },
+            zorder=7,
+        )
+        ax.annotate(
+            "Lower latency",
+            xy=(0.062, 0.164),
+            xycoords="axes fraction",
+            ha="left",
+            va="center",
+            rotation=arrow_text_angle,
+            rotation_mode="anchor",
+            fontsize=8.6,
+            color="#68777D",
+            fontfamily=["Comic Sans MS", "Segoe Print", "cursive"],
+            zorder=7,
+        )
+        ax.annotate(
+            "Lower energy",
+            xy=(0.124, 0.054),
+            xycoords="axes fraction",
+            ha="left",
+            va="center",
+            rotation=arrow_text_angle,
+            rotation_mode="anchor",
+            fontsize=8.6,
+            color="#68777D",
+            fontfamily=["Comic Sans MS", "Segoe Print", "cursive"],
+            zorder=7,
+        )
+
+        os.makedirs(output_dir, exist_ok=True)
+        fig.tight_layout()
+        _disable_clipping(ax)
+        base_path = os.path.join(output_dir, "energy_latency_fairness")
+        _save_figure(fig, base_path)
+        plt.close(fig)
+
+
 def plot_algorithm_comparison(
     summary_files: list[str],
     labels: list[str],
@@ -380,6 +563,9 @@ def plot_algorithm_comparison(
 
     # 气泡图：JFI 满意度 vs 时延
     plot_jfi_latency_bubble(labels, summaries, output_dir=output_dir)
+
+    # 气泡图：能耗 vs 时延，气泡大小表示 JFI
+    plot_energy_latency_bubble(labels, summaries, output_dir=output_dir)
 
 
 if __name__ == "__main__":
