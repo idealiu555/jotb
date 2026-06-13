@@ -55,8 +55,8 @@ class MASAC(MARLModel):
         self._set_target_critic_grads(enabled=False)
 
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=config.MASAC_ACTOR_LR, weight_decay=0.0)
-        self.critic_1_optimizer = torch.optim.Adam(self.critic_1.parameters(), lr=config.CRITIC_LR, weight_decay=0.0)
-        self.critic_2_optimizer = torch.optim.Adam(self.critic_2.parameters(), lr=config.CRITIC_LR, weight_decay=0.0)
+        self.critic_1_optimizer = torch.optim.Adam(self.critic_1.parameters(), lr=config.MASAC_CRITIC_LR, weight_decay=0.0)
+        self.critic_2_optimizer = torch.optim.Adam(self.critic_2.parameters(), lr=config.MASAC_CRITIC_LR, weight_decay=0.0)
         self.target_entropy_per_agent: float = -float(action_dim) * config.TARGET_ENTROPY_SCALE
         self.alpha_optimizer = torch.optim.Adam([self.log_alpha], lr=config.ALPHA_LR, weight_decay=0.0)
 
@@ -247,8 +247,8 @@ class MASAC(MARLModel):
         self.alpha_optimizer.step()
         self._clamp_log_alpha()
 
-        soft_update(self.target_critic_1, self.critic_1, config.UPDATE_FACTOR)
-        soft_update(self.target_critic_2, self.critic_2, config.UPDATE_FACTOR)
+        soft_update(self.target_critic_1, self.critic_1, config.MASAC_UPDATE_FACTOR)
+        soft_update(self.target_critic_2, self.critic_2, config.MASAC_UPDATE_FACTOR)
 
         valid_q = current_q1[active_mask_tensor.bool()]
         return {

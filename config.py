@@ -168,13 +168,10 @@ BASE_CRITIC_HIDDEN_DIM: int = 384  # critic width for MLP branches
 ATTENTION_ACTOR_HIDDEN_DIM: int = 256  # MASAC policy-head width after attention encoding
 ATTENTION_CRITIC_HIDDEN_DIM: int = 512  # MASAC critic/Q-head width after attention encoding
 
-ACTOR_LR: float = 1e-4
-MADDPG_ACTOR_LR: float = 5e-5
-MAPPO_ACTOR_LR: float = 5e-5
-MASAC_ACTOR_LR: float = ACTOR_LR
-CRITIC_LR: float = 2e-4
+ACTOR_LR: float = 2e-5  # MADDPG/MATD3 actor learning rate
+CRITIC_LR: float = 5e-5  # MADDPG/MATD3 critic learning rate
 DISCOUNT_FACTOR: float = 0.99  # gamma
-UPDATE_FACTOR: float = 0.001  # tau
+UPDATE_FACTOR: float = 0.0005  # MADDPG/MATD3 target-network soft update tau
 MAX_GRAD_NORM: float = 8.0  # maximum norm for gradient clipping to prevent exploding gradients
 LOG_STD_MAX: float = 2  # maximum log standard deviation for stochastic policies
 LOG_STD_MIN: float = -20  # minimum log standard deviation for stochastic policies
@@ -187,8 +184,8 @@ INITIAL_RANDOM_STEPS: int = 40000  # steps of random actions for exploration
 LEARN_FREQ: int = 10  # steps to learn after
 
 # Gaussian Noise Parameters (for MADDPG and MATD3)
-INITIAL_NOISE_SCALE: float = 0.4
-MIN_NOISE_SCALE: float = 0.2
+INITIAL_NOISE_SCALE: float = 0.1
+MIN_NOISE_SCALE: float = 0.02
 NOISE_DECAY_RATE: float = 0.999
 BEAM_NOISE_RATIO: float = 0.1  # 波束动作噪声相对于位移动作噪声的比例
 
@@ -198,6 +195,8 @@ TARGET_POLICY_NOISE: float = 0.5  # standard deviation of target policy smoothin
 NOISE_CLIP: float = 1.0  # range to clip target policy smoothing noise
 
 # MAPPO Specific Hyperparameters
+MAPPO_ACTOR_LR: float = 5e-5
+MAPPO_CRITIC_LR: float = 2e-4
 PPO_ROLLOUT_LENGTH: int = 1000  # number of steps to collect per rollout (Set to STEPS_PER_EPISODE for episodic tasks)
 PPO_EPOCHS: int = 6  # number of epochs to run on the collected rollout data (aligned with official MAPPO best practices)
 PPO_BATCH_SIZE: int = 512  # size of mini-batches to use during the update step (increased from 64 for better GPU utilization)
@@ -214,6 +213,9 @@ PPO_VALUE_LOSS_COEF: float = 0.5  # coefficient for value function loss (PPO pap
 ATTENTION_COUNT_EMBED_DIM: int = 8  # embedding dim for normalized neighbor/UE counts in UAVEmbedding
 
 # MASAC Specific Hyperparameters
+MASAC_ACTOR_LR: float = 1e-4
+MASAC_CRITIC_LR: float = 2e-4
+MASAC_UPDATE_FACTOR: float = 0.001
 MASAC_ATTENTION_ACTOR: bool = False  # enable local entity encoder in actor
 MASAC_CRITIC_MODE: str = "mlp"  # options: "mlp", "local_attention", "agent_self_attention"
 MASAC_AGENT_ID_DIM: int = 32  # agent identity embedding dimension

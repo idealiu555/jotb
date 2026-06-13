@@ -29,7 +29,7 @@ class MAPPO(MARLModel):
 
         # Create optimizers
         self.actor_optimizer: torch.optim.AdamW = torch.optim.AdamW(self.actors.parameters(), lr=config.MAPPO_ACTOR_LR)
-        self.critic_optimizer: torch.optim.AdamW = torch.optim.AdamW(self.critics.parameters(), lr=config.CRITIC_LR)
+        self.critic_optimizer: torch.optim.AdamW = torch.optim.AdamW(self.critics.parameters(), lr=config.MAPPO_CRITIC_LR)
         self.entropy_coef: float = config.PPO_ENTROPY_COEF_START
         self.entropy_mc_samples: int = config.PPO_ENTROPY_MC_SAMPLES
         self.value_normalizer = ValueNorm(1, device=device)
