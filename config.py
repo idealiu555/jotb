@@ -122,7 +122,7 @@ BEAM_OFFSET_RANGE: float = 30.0          # offset模式下的最大偏移范围 
 # Reward weights for multi-objective optimization
 # All weights set to 1.0, relying on SCALE to balance magnitude
 ALPHA_1: float = 1.0  # weightage for latency (penalty)
-ALPHA_2: float = 1.25  # weightage for energy (penalty)
+ALPHA_2: float = 1.5  # weightage for energy (penalty)
 ALPHA_3: float = 1.0  # weightage for fairness/JFI (reward)
 ALPHA_RATE: float = 1.0  # diagnostic scale for system throughput (not used in reward)
 REWARD_SCALING_FACTOR: float = 0.12  # scaling factor for rewards (归一化后保持原量级)
@@ -195,7 +195,7 @@ TARGET_POLICY_NOISE: float = 0.5  # standard deviation of target policy smoothin
 NOISE_CLIP: float = 1.0  # range to clip target policy smoothing noise
 
 # MAPPO Specific Hyperparameters
-MAPPO_ACTOR_LR: float = 5e-5
+MAPPO_ACTOR_LR: float = 4e-5
 MAPPO_CRITIC_LR: float = 2e-4
 PPO_ROLLOUT_LENGTH: int = 1000  # number of steps to collect per rollout (Set to STEPS_PER_EPISODE for episodic tasks)
 PPO_EPOCHS: int = 6  # number of epochs to run on the collected rollout data (aligned with official MAPPO best practices)

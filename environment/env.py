@@ -500,8 +500,7 @@ class Env:
         r_fairness: float = config.ALPHA_3 * np.clip((jfi - config.JFI_BASELINE) * config.JFI_SCALE, config.JFI_CLIP_MIN, config.JFI_CLIP_MAX)
         r_rate: float = config.ALPHA_RATE * np.log1p(scaled_rate)
 
-        # Keep rate as an evaluation metric only; optimize fairness, latency, and energy.
-        reward: float = r_fairness - r_latency - r_energy
+        reward: float = r_fairness + r_rate - r_latency - r_energy
         rewards: list[float] = [reward] * config.NUM_UAVS
         for uav in self._uavs:
             if uav.collision_violation:
