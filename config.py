@@ -122,7 +122,7 @@ BEAM_OFFSET_RANGE: float = 30.0          # offset模式下的最大偏移范围 
 # Reward weights for multi-objective optimization
 # All weights set to 1.0, relying on SCALE to balance magnitude
 ALPHA_1: float = 1.0  # weightage for latency (penalty)
-ALPHA_2: float = 1.5  # weightage for energy (penalty)
+ALPHA_2: float = 1.0  # weightage for energy (penalty)
 ALPHA_3: float = 1.0  # weightage for fairness/JFI (reward)
 ALPHA_RATE: float = 1.0  # diagnostic scale for system throughput (not used in reward)
 REWARD_SCALING_FACTOR: float = 0.12  # scaling factor for rewards (归一化后保持原量级)
@@ -168,8 +168,8 @@ BASE_CRITIC_HIDDEN_DIM: int = 384  # critic width for MLP branches
 ATTENTION_ACTOR_HIDDEN_DIM: int = 256  # MASAC policy-head width after attention encoding
 ATTENTION_CRITIC_HIDDEN_DIM: int = 512  # MASAC critic/Q-head width after attention encoding
 
-ACTOR_LR: float = 2e-5  # MADDPG/MATD3 actor learning rate
-CRITIC_LR: float = 5e-5  # MADDPG/MATD3 critic learning rate
+ACTOR_LR: float = 3e-5  # MADDPG/MATD3 actor learning rate
+CRITIC_LR: float = 6e-5  # MADDPG/MATD3 critic learning rate
 DISCOUNT_FACTOR: float = 0.99  # gamma
 UPDATE_FACTOR: float = 0.0005  # MADDPG/MATD3 target-network soft update tau
 MAX_GRAD_NORM: float = 8.0  # maximum norm for gradient clipping to prevent exploding gradients
@@ -180,18 +180,18 @@ EPSILON: float = 1e-9  # small value to prevent division by zero
 # Off-policy algorithm hyperparameters
 REPLAY_BUFFER_SIZE: int = 6 * 10**5  # B，大概包含前500个episode的数据
 REPLAY_BATCH_SIZE: int = 1024  # minibatch size (increased from 64 for better GPU utilization)
-INITIAL_RANDOM_STEPS: int = 40000  # steps of random actions for exploration
+INITIAL_RANDOM_STEPS: int = 10000  # steps of random actions for exploration
 LEARN_FREQ: int = 10  # steps to learn after
 
 # Gaussian Noise Parameters (for MADDPG and MATD3)
 INITIAL_NOISE_SCALE: float = 0.1
-MIN_NOISE_SCALE: float = 0.02
-NOISE_DECAY_RATE: float = 0.999
+MIN_NOISE_SCALE: float = 0.01
+NOISE_DECAY_RATE: float = 0.99
 BEAM_NOISE_RATIO: float = 0.1  # 波束动作噪声相对于位移动作噪声的比例
 
 # MATD3 Specific Hyperparameters
 POLICY_UPDATE_FREQ: int = 2  # delayed policy update frequency (TD3 typically uses 2)
-TARGET_POLICY_NOISE: float = 0.5  # standard deviation of target policy smoothing noise.
+TARGET_POLICY_NOISE: float = 0.4  # standard deviation of target policy smoothing noise.
 NOISE_CLIP: float = 1.0  # range to clip target policy smoothing noise
 
 # MAPPO Specific Hyperparameters

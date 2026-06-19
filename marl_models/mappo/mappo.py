@@ -140,10 +140,7 @@ class MAPPO(MARLModel):
         action_mask: torch.Tensor = self._get_active_mask(obs_array).unsqueeze(1)
         with torch.no_grad():
             dist: Normal = self.actors(obs_tensor)
-            if exploration:
-                raw_actions: torch.Tensor = dist.sample()
-            else:
-                raw_actions = dist.mean
+            raw_actions: torch.Tensor = dist.sample()
             actions: torch.Tensor = self._squash_actions(raw_actions) * action_mask
 
         return actions.cpu().numpy()

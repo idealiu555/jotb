@@ -3,9 +3,10 @@ python plot_comparison.py \
   --files model_test/comparison_data/summary_amasac.json \
           model_test/comparison_data/summary_masac.json \
           model_test/comparison_data/summary_matd3.json \
+          model_test/comparison_data/summary_maddpg.json \
           model_test/comparison_data/summary_mappo.json \
           model_test/comparison_data/summary_random.json \
-  --labels AMASAC MASAC MATD3 MAPPO Random
+  --labels AMASAC MASAC MATD3 MADDPG MAPPO Random
 
    默认输出到 model_test/comparison_plots 目录下，自动生成命名为算法标签和指标名称的 SVG / PDF 图片。
 """
@@ -252,115 +253,6 @@ def plot_metric_bar(
         plt.close(fig)
 
 
-def plot_jfi_latency_bubble(
-    labels: list[str],
-    summaries: list[dict[str, float]],
-    output_dir: str = "model_test/comparison_plots",
-) -> None:
-    """绘制 JFI 满意度 vs 时延的二维算法定位图。"""
-    import matplotlib.pyplot as plt
-
-    plot_items = [
-        (label, summary)
-        for label, summary in zip(labels, summaries)
-        if label.strip().lower() != "random"
-    ]
-    plot_labels = [label for label, _ in plot_items]
-    plot_summaries = [summary for _, summary in plot_items]
-
-    fairness_vals = [s["fairness"] for s in plot_summaries]
-    latency_vals = [s["latency"] for s in plot_summaries]
-
-    marker_size = 1100
-
-    with plt.rc_context(CONFERENCE_STYLE):
-        fig, ax = plt.subplots(figsize=(6.9, 5.2))
-        _remove_outer_frame(fig, ax)
-
-        label_offsets = {
-            "amasac": (-18, -4, "right", "center"),
-            "masac": (22, -2, "left", "center"),
-            "matd3": (22, 0, "left", "center"),
-            "mappo": (22, 0, "left", "center"),
-        }
-        for i, (label, jfi, lat) in enumerate(zip(plot_labels, fairness_vals, latency_vals)):
-            color = COLORS[i % len(COLORS)]
-            ax.scatter(
-                jfi,
-                lat,
-                s=marker_size,
-                color=color,
-                alpha=0.94,
-                edgecolors="white",
-                linewidths=1.8,
-                zorder=3,
-            )
-
-            dx, dy, ha, va = label_offsets.get(label.strip().lower(), (12, 0, "left", "center"))
-            ax.annotate(
-                label,
-                xy=(jfi, lat),
-                xytext=(dx, dy),
-                textcoords="offset points",
-                ha=ha,
-                va=va,
-                fontsize=11,
-                fontweight="semibold",
-                color=TEXT_COLOR,
-                zorder=4,
-            )
-
-        ax.set_xlabel("Jain's Fairness Index (JFI)", labelpad=8, color=TEXT_COLOR)
-        ax.set_ylabel("Average Latency (s)", labelpad=8, color=TEXT_COLOR)
-        ax.set_title(
-            "Fairness-Latency Trade-off",
-            pad=11,
-            color=TEXT_COLOR,
-        )
-
-        jfi_margin = _value_margin(fairness_vals, ratio=0.12, minimum=0.006)
-        lat_margin = _value_margin(latency_vals, ratio=0.14, minimum=0.08)
-        ax.set_xlim(min(fairness_vals) - jfi_margin, max(1.0, max(fairness_vals) + jfi_margin))
-        ax.set_ylim(min(latency_vals) - lat_margin, max(latency_vals) + lat_margin)
-
-        _paper_axes(ax)
-        _draw_full_grid(ax)
-
-        ax.annotate(
-            "",
-            xy=(0.93, 0.12),
-            xytext=(0.80, 0.25),
-            xycoords="axes fraction",
-            arrowprops={
-                "arrowstyle": "-|>",
-                "color": "#8EA1A6",
-                "linewidth": 1.6,
-                "mutation_scale": 15,
-                "shrinkA": 0,
-                "shrinkB": 0,
-            },
-            zorder=2,
-        )
-        ax.annotate(
-            "Better direction",
-            xy=(0.82, 0.28),
-            xycoords="axes fraction",
-            ha="left",
-            va="bottom",
-            fontsize=10.5,
-            color="#6F858A",
-            fontweight="semibold",
-            zorder=2,
-        )
-
-        os.makedirs(output_dir, exist_ok=True)
-        fig.tight_layout()
-        _disable_clipping(ax)
-        base_path = os.path.join(output_dir, "jfi_latency_comparison")
-        _save_figure(fig, base_path)
-        plt.close(fig)
-
-
 def _label_index(labels: list[str], target: str) -> int | None:
     target_lower = target.strip().lower()
     for idx, label in enumerate(labels):
@@ -560,9 +452,6 @@ def plot_algorithm_comparison(
         values = [summary[metric] for summary in summaries]
         output_path = os.path.join(output_dir, f"{metric}_comparison")
         plot_metric_bar(labels, values, metric, output_path)
-
-    # 气泡图：JFI 满意度 vs 时延
-    plot_jfi_latency_bubble(labels, summaries, output_dir=output_dir)
 
     # 气泡图：能耗 vs 时延，气泡大小表示 JFI
     plot_energy_latency_bubble(labels, summaries, output_dir=output_dir)
