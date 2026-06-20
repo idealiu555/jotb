@@ -180,13 +180,13 @@ EPSILON: float = 1e-9  # small value to prevent division by zero
 # Off-policy algorithm hyperparameters
 REPLAY_BUFFER_SIZE: int = 6 * 10**5  # B，大概包含前500个episode的数据
 REPLAY_BATCH_SIZE: int = 1024  # minibatch size (increased from 64 for better GPU utilization)
-INITIAL_RANDOM_STEPS: int = 10000  # steps of random actions for exploration
+INITIAL_RANDOM_STEPS: int = 0  # steps of random actions for exploration
 LEARN_FREQ: int = 10  # steps to learn after
 
 # Gaussian Noise Parameters (for MADDPG and MATD3)
 INITIAL_NOISE_SCALE: float = 0.1
-MIN_NOISE_SCALE: float = 0.01
-NOISE_DECAY_RATE: float = 0.99
+MIN_NOISE_SCALE: float = 0.005
+NOISE_DECAY_RATE: float = 0.985
 BEAM_NOISE_RATIO: float = 0.1  # 波束动作噪声相对于位移动作噪声的比例
 
 # MATD3 Specific Hyperparameters

@@ -10,6 +10,9 @@ import os
 
 
 class MATD3(MARLModel):
+    LR_PLATEAU_EPISODE = 500
+    LR_PLATEAU_MULTIPLIER = 0.05
+
     def __init__(self, model_name: str, num_agents: int, obs_dim: int, action_dim: int, device: str) -> None:
         super().__init__(model_name, num_agents, obs_dim, action_dim, device)
         self.total_obs_dim: int = num_agents * obs_dim
@@ -42,6 +45,22 @@ class MATD3(MARLModel):
         # Delayed Updates Counter
         self.update_counter: int = 0
 
+    def _learning_rate_plateau_update(self) -> int:
+        return int(self.LR_PLATEAU_EPISODE * config.STEPS_PER_EPISODE / config.LEARN_FREQ)
+
+    def _set_optimizer_lr(self, optimizer: torch.optim.Optimizer, lr: float) -> None:
+        for group in optimizer.param_groups:
+            group["lr"] = lr
+
+    def _apply_learning_rate_plateau(self, update_count: int) -> None:
+        multiplier = self.LR_PLATEAU_MULTIPLIER if update_count >= self._learning_rate_plateau_update() else 1.0
+        for optimizer in self.actor_optimizers:
+            self._set_optimizer_lr(optimizer, config.ACTOR_LR * multiplier)
+        for optimizer in self.critic_1_optimizers:
+            self._set_optimizer_lr(optimizer, config.CRITIC_LR * multiplier)
+        for optimizer in self.critic_2_optimizers:
+            self._set_optimizer_lr(optimizer, config.CRITIC_LR * multiplier)
+
     def select_actions(self, observations: list[np.ndarray], exploration: bool) -> np.ndarray:
         """Selects actions for all agents based on their observations (decentralized execution)."""
         # Batch all observations for better GPU utilization
@@ -65,6 +84,8 @@ class MATD3(MARLModel):
     def update(self, batch: ExperienceBatch) -> dict:
         assert isinstance(batch, dict), "MATD3 expects OffPolicyExperienceBatch (dict)"
         self.update_counter += 1
+        self._apply_learning_rate_plateau(self.update_counter)
+
         obs_batch = batch["obs"]
         actions_batch = batch["actions"]
         rewards_batch = batch["rewards"]
@@ -248,3 +269,4 @@ class MATD3(MARLModel):
         else:
             self.update_counter = 0
             print(f"⚠️ Update counter file not found: {update_counter_path}. Setting update_counter to 0.")
+        self._apply_learning_rate_plateau(self.update_counter)
