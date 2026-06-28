@@ -335,6 +335,8 @@ class MAPPO(MARLModel):
                 "actor": self.actors.state_dict(),
                 "critic": self.critics.state_dict(),
                 "value_normalizer": self.value_normalizer.state_dict(),
+                "actor_optimizer": self.actor_optimizer.state_dict(),
+                "critic_optimizer": self.critic_optimizer.state_dict(),
             },
             os.path.join(directory, "mappo.pth"),
         )
@@ -352,3 +354,7 @@ class MAPPO(MARLModel):
             checkpoint["critic"],
             checkpoint.get("value_normalizer"),
         )
+        if "actor_optimizer" in checkpoint:
+            self.actor_optimizer.load_state_dict(checkpoint["actor_optimizer"])
+        if "critic_optimizer" in checkpoint:
+            self.critic_optimizer.load_state_dict(checkpoint["critic_optimizer"])

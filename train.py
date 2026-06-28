@@ -53,7 +53,14 @@ def _should_record_debug_metrics(progress_step: int) -> bool:
     return progress_step % config.LOG_FREQ == 0
 
 
-def train_on_policy(env: Env, model: MARLModel, logger: Logger, num_episodes: int) -> None:
+def train_on_policy(
+    env: Env,
+    model: MARLModel,
+    logger: Logger,
+    num_episodes: int,
+    *,
+    start_update: int = 1,
+) -> None:
     start_time: float = time.time()
     if config.PPO_ROLLOUT_LENGTH != config.STEPS_PER_EPISODE:
         raise ValueError(
@@ -72,6 +79,8 @@ def train_on_policy(env: Env, model: MARLModel, logger: Logger, num_episodes: in
     if num_updates < 1000:
         save_freq = min(100, num_updates)
     print(f"Total updates to be performed: {num_updates}")
+    if start_update > 1:
+        print(f"Resuming from update {start_update}.")
     print(f"Each update has {config.PPO_ROLLOUT_LENGTH} steps.")
     print(f"Updates for {config.PPO_EPOCHS} epochs with batch size {config.PPO_BATCH_SIZE}.")
     rollout_log: Log = Log()
@@ -79,7 +88,7 @@ def train_on_policy(env: Env, model: MARLModel, logger: Logger, num_episodes: in
     action_accumulator: list = []
     latest_debug_stats: dict = {}
 
-    for update in range(1, num_updates + 1):
+    for update in range(start_update, num_updates + 1):
         obs: list[np.ndarray] = env.reset()
         capture_images: bool = _should_capture_artifacts(update)
         rollout_reward: float = 0.0
@@ -174,7 +183,14 @@ def train_on_policy(env: Env, model: MARLModel, logger: Logger, num_episodes: in
     save_models(model, -1, "update", logger.timestamp, final=True)
 
 
-def train_off_policy(env: Env, model: MARLModel, logger: Logger, num_episodes: int) -> None:
+def train_off_policy(
+    env: Env,
+    model: MARLModel,
+    logger: Logger,
+    num_episodes: int,
+    *,
+    start_episode: int = 1,
+) -> None:
     start_time: float = time.time()
     buffer: ReplayBuffer = ReplayBuffer(config.REPLAY_BUFFER_SIZE)
     save_freq: int = num_episodes // 10
@@ -183,13 +199,16 @@ def train_off_policy(env: Env, model: MARLModel, logger: Logger, num_episodes: i
     episode_log: Log = Log()
 
     action_accumulator: list = []
-    total_step_count: int = 0
-    total_update_count: int = 0
+    total_step_count: int = (start_episode - 1) * config.STEPS_PER_EPISODE
+    total_update_count: int = int(getattr(model, "update_counter", 0))
     latest_debug_stats: dict = {}
     latest_debug_batch = None
     reward_history: deque[float] = deque(maxlen=200)
 
-    for episode in range(1, num_episodes + 1):
+    if start_episode > 1:
+        print(f"Resuming from episode {start_episode}.")
+
+    for episode in range(start_episode, num_episodes + 1):
         obs = env.reset()
         capture_images: bool = _should_capture_artifacts(episode)
         episode_reward: float = 0.0
@@ -299,11 +318,21 @@ def train_off_policy(env: Env, model: MARLModel, logger: Logger, num_episodes: i
     save_models(model, -1, "episode", logger.timestamp, final=True)
 
 
-def train_random(env: Env, model: MARLModel, logger: Logger, num_episodes: int) -> None:
+def train_random(
+    env: Env,
+    model: MARLModel,
+    logger: Logger,
+    num_episodes: int,
+    *,
+    start_episode: int = 1,
+) -> None:
     start_time: float = time.time()
     episode_log: Log = Log()
 
-    for episode in range(1, num_episodes + 1):
+    if start_episode > 1:
+        print(f"Resuming from episode {start_episode}.")
+
+    for episode in range(start_episode, num_episodes + 1):
         obs = env.reset()
         capture_images: bool = _should_capture_artifacts(episode)
         episode_reward: float = 0.0

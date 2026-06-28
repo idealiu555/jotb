@@ -168,8 +168,8 @@ BASE_CRITIC_HIDDEN_DIM: int = 384  # critic width for MLP branches
 ATTENTION_ACTOR_HIDDEN_DIM: int = 256  # MASAC policy-head width after attention encoding
 ATTENTION_CRITIC_HIDDEN_DIM: int = 512  # MASAC critic/Q-head width after attention encoding
 
-ACTOR_LR: float = 3e-5  # MADDPG/MATD3 actor learning rate
-CRITIC_LR: float = 6e-5  # MADDPG/MATD3 critic learning rate
+ACTOR_LR: float = 2e-5  # MADDPG/MATD3 actor learning rate
+CRITIC_LR: float = 4e-5  # MADDPG/MATD3 critic learning rate
 DISCOUNT_FACTOR: float = 0.99  # gamma
 UPDATE_FACTOR: float = 0.0005  # MADDPG/MATD3 target-network soft update tau
 MAX_GRAD_NORM: float = 8.0  # maximum norm for gradient clipping to prevent exploding gradients

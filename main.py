@@ -8,7 +8,19 @@ from utils.plot_logs import generate_plots_if_available
 import config
 import argparse
 import os
+import re
 from datetime import datetime
+
+
+def infer_resume_start_step(resume_path: str, progress_name: str) -> int:
+    checkpoint_dir: str = os.path.basename(os.path.normpath(resume_path))
+    match = re.fullmatch(rf"{re.escape(progress_name)}_(\d+)", checkpoint_dir)
+    if match is None:
+        raise ValueError(
+            f"Resume path '{resume_path}' does not contain an {progress_name} checkpoint step. "
+            f"Use a directory like '{progress_name}_0042', or pass --resume_start_step explicitly."
+        )
+    return int(match.group(1)) + 1
 
 
 def start_training(args: argparse.Namespace):
@@ -21,13 +33,30 @@ def start_training(args: argparse.Namespace):
     env: Env = Env()
     model_name: str = config.MODEL.lower()
     model: MARLModel = get_model(model_name)
+    progress_name: str = "update" if model_name == "mappo" else "episode"
+    start_step: int = 1
+
+    if args.resume_path is not None:
+        start_step = (
+            args.resume_start_step
+            if args.resume_start_step is not None
+            else infer_resume_start_step(args.resume_path, progress_name)
+        )
+        if start_step < 1:
+            raise ValueError(f"--resume_start_step must be >= 1, got {start_step}")
+        if start_step > args.num_episodes:
+            raise ValueError(
+                f"Resume start {progress_name} {start_step} exceeds target --num_episodes {args.num_episodes}."
+            )
+        model.load(args.resume_path)
+        print(f"📥 Resuming {model_name} from {args.resume_path} at {progress_name} {start_step}")
 
     if model_name in ["maddpg", "matd3", "masac"]:
-        train_off_policy(env, model, logger, args.num_episodes)
+        train_off_policy(env, model, logger, args.num_episodes, start_episode=start_step)
     elif model_name == "mappo":
-        train_on_policy(env, model, logger, args.num_episodes)
+        train_on_policy(env, model, logger, args.num_episodes, start_update=start_step)
     else:  # "random"
-        train_random(env, model, logger, args.num_episodes)
+        train_random(env, model, logger, args.num_episodes, start_episode=start_step)
 
     print("✅ Training Completed!\n")
     print("📊 Generating plots...")
@@ -61,6 +90,13 @@ if __name__ == "__main__":
     parent_parser.add_argument("--num_episodes", type=int, required=True)
     parent_parser.add_argument("--gpu_id", type=str, default=None, help="GPU ID to use (e.g., '0', '1')")
     train_parser = subparsers.add_parser("train", parents=[parent_parser])
+    train_parser.add_argument("--resume_path", type=str, default=None, help="Checkpoint directory to resume from.")
+    train_parser.add_argument(
+        "--resume_start_step",
+        type=int,
+        default=None,
+        help="First episode/update to run when resume_path does not encode progress, e.g. final checkpoints.",
+    )
 
     test_parser = subparsers.add_parser("test", parents=[parent_parser])
     test_parser.add_argument("--model_path", type=str, required=True)
