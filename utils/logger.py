@@ -45,7 +45,11 @@ class Logger:
         self.debug_json_file_path: str = os.path.join(self.log_dir, f"debug_data_{timestamp}.json")
         self.config_file_path: str = os.path.join(self.log_dir, f"config_{timestamp}.json")
 
-    def log_configs(self) -> None:
+    def log_configs(self, *, overwrite: bool = True) -> None:
+        if not overwrite and os.path.exists(self.config_file_path):
+            print(f"📝 Keeping existing configs at {self.config_file_path}")
+            return
+
         config_dict: dict = {key: getattr(default_config, key) for key in dir(default_config) if key.isupper() and not key.startswith("__") and not callable(getattr(default_config, key))}
 
         # Custom serializer for numpy arrays

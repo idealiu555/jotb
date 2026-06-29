@@ -5,6 +5,7 @@ from train import train_on_policy, train_off_policy, train_random
 from test import test_model
 from utils.logger import Logger
 from utils.plot_logs import generate_plots_if_available
+from utils.training_run import resolve_training_timestamp
 import config
 import argparse
 import os
@@ -24,10 +25,13 @@ def infer_resume_start_step(resume_path: str, progress_name: str) -> int:
 
 
 def start_training(args: argparse.Namespace):
-    timestamp: str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    timestamp: str = resolve_training_timestamp(args, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+    resume_log_timestamp: str | None = getattr(args, "resume_log_timestamp", None)
     print(f"\n🚀 Training started at {timestamp} for {args.num_episodes} episodes\n")
     logger: Logger = Logger("train_logs", timestamp)
-    logger.log_configs()
+    logger.log_configs(overwrite=resume_log_timestamp is None)
+    if resume_log_timestamp is not None:
+        print(f"🧾 Appending resume logs to train_logs/log_data_{timestamp}.json")
 
     set_seed(config.SEED)
     env: Env = Env()
@@ -96,6 +100,12 @@ if __name__ == "__main__":
         type=int,
         default=None,
         help="First episode/update to run when resume_path does not encode progress, e.g. final checkpoints.",
+    )
+    train_parser.add_argument(
+        "--resume_log_timestamp",
+        type=str,
+        default=None,
+        help="Existing training timestamp whose log/config/plot/checkpoint run should be reused when resuming.",
     )
 
     test_parser = subparsers.add_parser("test", parents=[parent_parser])
