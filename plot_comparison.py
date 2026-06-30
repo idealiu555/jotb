@@ -24,8 +24,8 @@ CONFERENCE_STYLE: dict[str, object] = {
     "axes.titlesize": 15,
     "axes.titleweight": "semibold",
     "axes.labelweight": "semibold",
-    "xtick.labelsize": 12,
-    "ytick.labelsize": 12,
+    "xtick.labelsize": 13,
+    "ytick.labelsize": 13,
     "axes.linewidth": 0.9,
     "xtick.major.width": 0.8,
     "ytick.major.width": 0.8,
@@ -252,8 +252,8 @@ def plot_energy_latency_bubble(
                 zorder=4,
             )
 
-        ax.set_xlabel("Average Energy per Step (J)", labelpad=8, color=TEXT_COLOR)
-        ax.set_ylabel("Average Latency per Step (s)", labelpad=8, color=TEXT_COLOR)
+        ax.set_xlabel("Average Energy(J)", labelpad=8, color=TEXT_COLOR)
+        ax.set_ylabel("Average Latency(s)", labelpad=8, color=TEXT_COLOR)
         ax.set_title("Energy-Latency-Coverage Trade-off", pad=11, color=TEXT_COLOR)
 
         _paper_axes(ax)
@@ -338,7 +338,7 @@ def plot_energy_latency_bubble(
 
         os.makedirs(output_dir, exist_ok=True)
         fig.tight_layout()
-        base_path = os.path.join(output_dir, "energy_latency_fairness")
+        base_path = os.path.join(output_dir, "3_trade_off")
         _save_figure(fig, base_path)
         plt.close(fig)
 

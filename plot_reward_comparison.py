@@ -28,16 +28,22 @@ ACADEMIC_STYLE = {
     "figure.dpi": 150,
     "font.family": "Times New Roman",
     "font.size": 12,
-    "axes.titlesize": 14,
-    "axes.labelsize": 13,
-    "axes.linewidth": 1.2,
+    "axes.titlesize": 15,
+    "axes.labelsize": 14,
+    "axes.titleweight": "semibold",
+    "axes.labelweight": "semibold",
+    "axes.linewidth": 0.9,
     "axes.grid": True,
     "grid.alpha": 0.3,
     "grid.linestyle": "--",
     "legend.fontsize": 11,
     "legend.framealpha": 0.9,
-    "xtick.labelsize": 11,
-    "ytick.labelsize": 11,
+    "xtick.labelsize": 13,
+    "ytick.labelsize": 13,
+    "xtick.major.width": 0.8,
+    "ytick.major.width": 0.8,
+    "xtick.major.size": 3.5,
+    "ytick.major.size": 3.5,
     "lines.linewidth": 2.0,
     "lines.markersize": 4,
     "savefig.bbox": "tight",
@@ -46,18 +52,32 @@ ACADEMIC_STYLE = {
 
 # 统一论文图调色板
 PALETTE: tuple[str, ...] = (
-    "#C65F64",
-    "#DE8A73",
-    "#E5A65D",
-    "#9187CB",
-    "#7EAEB7",
-    "#86AA96",
+    "#e18283",
+    "#f6ad98",
+    "#facd9d",
+    "#bdb6e4",
+    "#c9dfe2",
+    "#bcd1c4",
 )
+
+AXIS_COLOR = "#3D4852"
+TEXT_COLOR = "#263238"
 
 
 # ──────────────────────────────────────────────
 # 工具函数
 # ──────────────────────────────────────────────
+
+def _paper_axes(ax) -> None:
+    """对齐 plot_comparison.py 的坐标轴粗细和颜色。"""
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_color(AXIS_COLOR)
+        ax.spines[side].set_linewidth(0.9)
+    ax.tick_params(axis="both", colors=AXIS_COLOR, labelcolor=TEXT_COLOR)
+    ax.set_axisbelow(True)
+
 
 def smooth_curve(values: np.ndarray, weight: float = 0.9) -> np.ndarray:
     """指数移动平均（EMA）平滑。"""
@@ -138,7 +158,7 @@ def plot_reward_comparison(
     log_files: list[str],
     labels: list[str],
     output_dir: str = "train_plots/comparison",
-    output_name: str = "reward_comparison",
+    output_name: str = "2_reward_comparison",
     smoothing: float = 0.9,
 ) -> None:
     """
@@ -175,10 +195,11 @@ def plot_reward_comparison(
         for x, reward, label, color in datasets:
             _plot_algorithm(ax, x, reward, color, label, smoothing)
 
-        ax.set_xlabel("Episode")
-        ax.set_ylabel("Average Team Reward")
-        ax.set_title("Training Reward Comparison", fontweight="bold", pad=10)
+        ax.set_xlabel("Episode", labelpad=8, color=TEXT_COLOR)
+        ax.set_ylabel("Average Team Reward", labelpad=8, color=TEXT_COLOR)
+        ax.set_title("Training Reward Comparison", pad=11, color=TEXT_COLOR)
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        _paper_axes(ax)
         legend = ax.legend(
             loc="best",
             fancybox=True,
