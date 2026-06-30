@@ -8,7 +8,7 @@ python plot_comparison.py \
           model_test/comparison_data/summary_random.json \
   --labels AMASAC MASAC MATD3 MADDPG MAPPO Random
 
-   默认输出到 model_test/comparison_plots 目录下，自动生成命名为算法标签和指标名称的 SVG / PDF 图片。
+   默认输出到 model_test/comparison_plots 目录下，自动生成 energy_latency_fairness.svg / .pdf。
 """
 import argparse
 import json
@@ -49,16 +49,6 @@ EXPORT_KWARGS: dict[str, object] = {
     "edgecolor": "none",
 }
 
-METRIC_CONFIG: dict[str, dict[str, str]] = {
-    "reward": {"ylabel": "Average Reward", "title": "Reward"},
-    "latency": {"ylabel": "Average Latency (s)", "title": "Latency"},
-    "energy": {"ylabel": "Average Energy Consumption (J)", "title": "Energy"},
-    "fairness": {"ylabel": "Jain's Fairness Index", "title": "Fairness"},
-    "rate": {"ylabel": "Average System Throughput (bps)", "title": "Throughput"},
-    "collisions": {"ylabel": "Average Collision Count", "title": "Collisions"},
-    "boundaries": {"ylabel": "Average Boundary Violation Count", "title": "Boundaries"},
-}
-
 COLORS: tuple[str, ...] = (
     "#e18283",
     "#f6ad98",
@@ -71,6 +61,7 @@ COLORS: tuple[str, ...] = (
 AXIS_COLOR = "#3D4852"
 GRID_COLOR = "#E3E8EF"
 TEXT_COLOR = "#263238"
+REQUIRED_METRICS: tuple[str, ...] = ("energy", "latency", "fairness")
 
 
 def _load_summary_averages(file_path: str) -> dict[str, float]:
@@ -82,23 +73,11 @@ def _load_summary_averages(file_path: str) -> dict[str, float]:
         raise ValueError(f"{file_path} does not contain an 'averages' object")
 
     result: dict[str, float] = {}
-    for metric in METRIC_CONFIG:
+    for metric in REQUIRED_METRICS:
         if metric not in averages:
             raise ValueError(f"{file_path} is missing averages.{metric}")
         result[metric] = float(averages[metric])
     return result
-
-
-
-
-def _format_bar_label(value: float) -> str:
-    if value == 0:
-        return "0"
-    if abs(value) >= 1e6 or abs(value) < 1e-3:
-        return f"{value:.2e}"
-    if abs(value) >= 100:
-        return f"{value:.1f}"
-    return f"{value:.3f}".rstrip("0").rstrip(".")
 
 
 def _paper_axes(ax) -> None:
@@ -135,24 +114,6 @@ def _disable_clipping(ax) -> None:
             artist.set_clip_on(False)
 
 
-def _draw_horizontal_grid(ax) -> None:
-    xmin, xmax = ax.get_xlim()
-    ymin, ymax = ax.get_ylim()
-    for tick in ax.get_yticks():
-        if tick < ymin or tick > ymax:
-            continue
-        ax.hlines(
-            tick,
-            xmin,
-            xmax,
-            colors=GRID_COLOR,
-            linewidth=0.75,
-            alpha=0.85,
-            zorder=0,
-            clip_on=False,
-        )
-
-
 def _draw_full_grid(ax) -> None:
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
@@ -187,70 +148,6 @@ def _draw_full_grid(ax) -> None:
 def _value_margin(values: list[float], ratio: float, minimum: float) -> float:
     data_range = max(values) - min(values)
     return data_range * ratio + minimum
-
-
-def plot_metric_bar(
-    labels: list[str],
-    values: list[float],
-    metric: str,
-    output_path: str,
-) -> None:
-    import matplotlib.pyplot as plt
-
-    cfg = METRIC_CONFIG[metric]
-    x = np.arange(len(labels))
-    width = 0.56 if len(labels) <= 3 else 0.64
-    colors = [COLORS[i % len(COLORS)] for i in range(len(labels))]
-
-    fig_width = max(6.2, 1.25 * len(labels) + 2.4)
-    with plt.rc_context(CONFERENCE_STYLE):
-        fig, ax = plt.subplots(figsize=(fig_width, 4.8))
-        _remove_outer_frame(fig, ax)
-        bars = ax.bar(
-            x,
-            values,
-            width=width,
-            color=colors,
-            edgecolor="white",
-            linewidth=1.1,
-            alpha=0.92,
-        )
-
-        ax.set_title(f"{cfg['title']} Comparison", pad=11, color=TEXT_COLOR)
-        ax.set_ylabel(cfg["ylabel"], labelpad=8, color=TEXT_COLOR)
-        ax.set_xticks(x)
-        ax.set_xticklabels(labels)
-        _paper_axes(ax)
-
-        max_value = max(values) if values else 0.0
-        min_value = min(values) if values else 0.0
-        if min_value >= 0:
-            ax.set_ylim(bottom=0)
-        if values:
-            ax.margins(y=0.18)
-        _draw_horizontal_grid(ax)
-
-        label_color = "#30363D"
-        for bar, value in zip(bars, values):
-            height = bar.get_height()
-            offset = 5 if height >= 0 else -14
-            va = "bottom" if height >= 0 else "top"
-            ax.annotate(
-                _format_bar_label(value),
-                xy=(bar.get_x() + bar.get_width() / 2, height),
-                xytext=(0, offset),
-                textcoords="offset points",
-                ha="center",
-                va=va,
-                fontsize=11,
-                color=label_color,
-            )
-
-        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
-        fig.tight_layout()
-        _disable_clipping(ax)
-        _save_figure(fig, output_path)
-        plt.close(fig)
 
 
 def _label_index(labels: list[str], target: str) -> int | None:
@@ -296,22 +193,14 @@ def plot_energy_latency_bubble(
         bubble_sizes = [0.5 * (min_bubble_size + max_bubble_size)]
 
     with plt.rc_context(CONFERENCE_STYLE):
-        fig, ax = plt.subplots(figsize=(7.3, 5.3))
+        fig, ax = plt.subplots(figsize=(7.2, 5.4))
         _remove_outer_frame(fig, ax)
-
-        label_offsets = {
-            "amasac": (28, 0, "left", "center"),
-            "masac": (28, 0, "left", "center"),
-            "matd3": (28, 0, "left", "center"),
-            "mappo": (28, 0, "left", "center"),
-            "random": (28, 0, "left", "center"),
-        }
 
         energy_margin = _value_margin(axis_energy_vals, ratio=0.18, minimum=5.0)
         lat_margin = _value_margin(axis_latency_vals, ratio=0.16, minimum=80.0)
-        x_min = min(axis_energy_vals) - energy_margin
-        x_max = max(axis_energy_vals) + energy_margin
-        y_min = min(axis_latency_vals) - lat_margin
+        x_min = min(axis_energy_vals) - energy_margin * 2.55
+        x_max = max(axis_energy_vals) + energy_margin * 3
+        y_min = min(axis_latency_vals) - lat_margin * 1.45
         y_max = max(axis_latency_vals) + lat_margin
         ax.set_xlim(x_min, x_max)
         ax.set_ylim(y_min, y_max)
@@ -331,20 +220,29 @@ def plot_energy_latency_bubble(
             plot_latency = latency
             plot_label = label
             if is_outlier:
-                plot_energy = x_max - 0.075 * x_span
-                plot_latency = y_max - 0.090 * y_span
+                plot_energy = x_max - 0.16 * x_span
+                plot_latency = y_max - 0.030 * y_span
                 plot_label = f"{label}\n(outlier)"
+                random_arrow_start = (
+                    plot_energy + 0.01 * x_span,
+                    plot_latency + 0.018 * y_span,
+                )
+                random_arrow_end = (
+                    plot_energy + 0.060 * x_span,
+                    plot_latency + 0.072 * y_span,
+                )
                 ax.annotate(
                     "",
-                    xy=(x_max - 0.008 * x_span, y_max - 0.008 * y_span),
-                    xytext=(plot_energy, plot_latency),
+                    xy=random_arrow_end,
+                    xytext=random_arrow_start,
+                    annotation_clip=False,
                     arrowprops={
                         "arrowstyle": "-|>",
                         "color": "#68777D",
                         "linewidth": 1.2,
                         "mutation_scale": 11,
                     },
-                    zorder=2,
+                    zorder=5,
                 )
             ax.scatter(
                 plot_energy,
@@ -357,39 +255,67 @@ def plot_energy_latency_bubble(
                 zorder=3,
             )
 
-            dx, dy, ha, va = label_offsets.get(label.strip().lower(), (12, 0, "left", "center"))
+            marker_radius_points = np.sqrt(size) * 0.56
+            dx = marker_radius_points + 2.5
             ax.annotate(
                 plot_label,
                 xy=(plot_energy, plot_latency),
-                xytext=(dx, dy),
+                xytext=(dx, 0),
                 textcoords="offset points",
-                ha=ha,
-                va=va,
+                ha="left",
+                va="center",
                 fontsize=11,
                 fontweight="semibold",
                 color=TEXT_COLOR,
                 zorder=4,
             )
 
-        ax.set_xlabel("Average Energy Consumption (J)", labelpad=8, color=TEXT_COLOR)
-        ax.set_ylabel("Average Latency (s)", labelpad=8, color=TEXT_COLOR)
-        ax.set_title("Energy-Latency-Fairness Trade-off", pad=11, color=TEXT_COLOR)
+        ax.set_xlabel("Average Energy per Step (J)", labelpad=8, color=TEXT_COLOR)
+        ax.set_ylabel("Average Latency per Step (s)", labelpad=8, color=TEXT_COLOR)
+        ax.set_title("Energy-Latency-Coverage Trade-off", pad=11, color=TEXT_COLOR)
 
         _paper_axes(ax)
+        ax.set_xticks([tick for tick in ax.get_xticks() if tick <= 530.0 or np.isclose(tick, 530.0)])
         _draw_full_grid(ax)
+        ax.hlines(
+            1600.0,
+            x_min,
+            530.0,
+            colors="#6F7A80",
+            linestyles=(0, (3, 2)),
+            linewidth=1.6,
+            alpha=0.80,
+            zorder=2,
+            clip_on=False,
+        )
+        ax.vlines(
+            530.0,
+            y_min,
+            1600.0,
+            colors="#6F7A80",
+            linestyles=(0, (3, 2)),
+            linewidth=1.6,
+            alpha=0.80,
+            zorder=2,
+            clip_on=False,
+        )
 
-        arrow_head = (0.055, 0.065)
-        arrow_tail = (0.190, 0.205)
-        head_px = ax.transAxes.transform(arrow_head)
-        tail_px = ax.transAxes.transform(arrow_tail)
+        lower_arrow_start = (0.180, 0.2140)
+        lower_arrow_end = (0.032, 0.056)
+        lower_latency_text_pos = (0.041, 0.148)
+        lower_energy_text_pos = (0.090, 0.046)
+        lower_text_angle_start = lower_arrow_start
+        lower_text_angle_end = lower_arrow_end
+        head_px = ax.transAxes.transform(lower_text_angle_end)
+        tail_px = ax.transAxes.transform(lower_text_angle_start)
         arrow_text_angle = float(
             np.degrees(np.arctan2(tail_px[1] - head_px[1], tail_px[0] - head_px[0]))
         )
 
         ax.annotate(
             "",
-            xy=arrow_head,
-            xytext=arrow_tail,
+            xy=lower_arrow_end,
+            xytext=lower_arrow_start,
             xycoords="axes fraction",
             arrowprops={
                 "arrowstyle": "-|>",
@@ -403,7 +329,7 @@ def plot_energy_latency_bubble(
         )
         ax.annotate(
             "Lower latency",
-            xy=(0.062, 0.164),
+            xy=lower_latency_text_pos,
             xycoords="axes fraction",
             ha="left",
             va="center",
@@ -411,12 +337,12 @@ def plot_energy_latency_bubble(
             rotation_mode="anchor",
             fontsize=8.6,
             color="#68777D",
-            fontfamily=["Comic Sans MS", "Segoe Print", "cursive"],
+            fontfamily="sans-serif",
             zorder=7,
         )
         ax.annotate(
             "Lower energy",
-            xy=(0.124, 0.054),
+            xy=lower_energy_text_pos,
             xycoords="axes fraction",
             ha="left",
             va="center",
@@ -424,7 +350,7 @@ def plot_energy_latency_bubble(
             rotation_mode="anchor",
             fontsize=8.6,
             color="#68777D",
-            fontfamily=["Comic Sans MS", "Segoe Print", "cursive"],
+            fontfamily="sans-serif",
             zorder=7,
         )
 
@@ -447,18 +373,11 @@ def plot_algorithm_comparison(
         raise ValueError("At least one summary file is required")
 
     summaries = [_load_summary_averages(file_path) for file_path in summary_files]
-
-    for metric in METRIC_CONFIG:
-        values = [summary[metric] for summary in summaries]
-        output_path = os.path.join(output_dir, f"{metric}_comparison")
-        plot_metric_bar(labels, values, metric, output_path)
-
-    # 气泡图：能耗 vs 时延，气泡大小表示 JFI
     plot_energy_latency_bubble(labels, summaries, output_dir=output_dir)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="绘制多算法测试 summary 指标柱形对比图。")
+    parser = argparse.ArgumentParser(description="绘制能耗-时延-公平性气泡对比图。")
     parser.add_argument("--files", nargs="+", required=True, help="测试 summary JSON 文件路径列表")
     parser.add_argument("--labels", nargs="+", required=True, help="对应算法标签，数量必须与文件一致")
     parser.add_argument("--output_dir", type=str, default="model_test/comparison_plots", help="SVG 输出目录")

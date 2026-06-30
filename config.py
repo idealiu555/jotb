@@ -208,6 +208,7 @@ PPO_ENTROPY_MC_SAMPLES: int = 8  # Monte Carlo samples for squashed-policy entro
 PPO_GAE_LAMBDA: float = 0.95  # GAE lambda for lower-variance advantage estimation
 PPO_MAX_LOG_RATIO: float = 10.0  # clip log-ratio before exp to avoid numerical spikes
 PPO_VALUE_LOSS_COEF: float = 0.5  # coefficient for value function loss (PPO paper default)
+MAPPO_EVAL_NOISE_SCALE: float = 0.4  # fraction of policy stddev used during offline evaluation
 
 # Attention Encoder Count Embedding
 ATTENTION_COUNT_EMBED_DIM: int = 8  # embedding dim for normalized neighbor/UE counts in UAVEmbedding

@@ -6,8 +6,8 @@
 
 用法示例：
 python plot_reward_comparison.py \
-  --files train_logs/amasac_log.json train_logs/masac_log.json train_logs/matd3_log.json train_logs/mappo_log.json train_logs/random_log.json \
-  --labels AMASAC MASAC MATD3 MAPPO Random \
+  --files train_logs/amasac_log.json train_logs/masac_log.json train_logs/matd3_log.json train_logs/maddpg_log.json train_logs/mappo_log.json train_logs/random_log.json \
+  --labels AMASAC MASAC MATD3 MADDPG MAPPO Random \
   --output_dir train_plots/comparison
 
 """
