@@ -24,7 +24,7 @@ from matplotlib.ticker import MaxNLocator
 # 学术论文风格配置（与 utils/plot_logs.py 保持一致）
 # ──────────────────────────────────────────────
 ACADEMIC_STYLE = {
-    "figure.figsize": (9, 6),
+    "figure.figsize": (8, 6),
     "figure.dpi": 150,
     "font.family": "Times New Roman",
     "font.size": 12,
@@ -46,12 +46,12 @@ ACADEMIC_STYLE = {
 
 # 统一论文图调色板
 PALETTE: tuple[str, ...] = (
-    "#e18283",
-    "#f6ad98",
-    "#facd9d",
-    "#bdb6e4",
-    "#c9dfe2",
-    "#bcd1c4",
+    "#C65F64",
+    "#DE8A73",
+    "#E5A65D",
+    "#9187CB",
+    "#7EAEB7",
+    "#86AA96",
 )
 
 
@@ -176,10 +176,17 @@ def plot_reward_comparison(
             _plot_algorithm(ax, x, reward, color, label, smoothing)
 
         ax.set_xlabel("Episode")
-        ax.set_ylabel("Average Team Reward (per step)")
+        ax.set_ylabel("Average Team Reward")
         ax.set_title("Training Reward Comparison", fontweight="bold", pad=10)
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-        ax.legend(loc="best", fancybox=True, shadow=False)
+        legend = ax.legend(
+            loc="best",
+            fancybox=True,
+            shadow=False,
+            handlelength=2.0,
+        )
+        for legend_line in legend.get_lines():
+            legend_line.set_linewidth(5.0)
 
         fig.tight_layout()
 

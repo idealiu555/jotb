@@ -10,8 +10,6 @@ import os
 class MADDPG(MARLModel):
     CHECKPOINT_FORMAT = "shared_maddpg_vector_critic"
     CHECKPOINT_VERSION = 1
-    LR_PLATEAU_EPISODE = 500
-    LR_PLATEAU_MULTIPLIER = 0.05
 
     def __init__(self, model_name: str, num_agents: int, obs_dim: int, action_dim: int, device: str) -> None:
         super().__init__(model_name, num_agents, obs_dim, action_dim, device)
@@ -28,19 +26,6 @@ class MADDPG(MARLModel):
         self.critic_optimizer = torch.optim.AdamW(self.critic.parameters(), lr=config.CRITIC_LR)
 
         self.noise: list[GaussianNoise] = [GaussianNoise() for _ in range(num_agents)]
-        self.update_counter: int = 0
-
-    def _learning_rate_plateau_update(self) -> int:
-        return int(self.LR_PLATEAU_EPISODE * config.STEPS_PER_EPISODE / config.LEARN_FREQ)
-
-    def _set_optimizer_lr(self, optimizer: torch.optim.Optimizer, lr: float) -> None:
-        for group in optimizer.param_groups:
-            group["lr"] = lr
-
-    def _apply_learning_rate_plateau(self, update_count: int) -> None:
-        multiplier = self.LR_PLATEAU_MULTIPLIER if update_count >= self._learning_rate_plateau_update() else 1.0
-        self._set_optimizer_lr(self.actor_optimizer, config.ACTOR_LR * multiplier)
-        self._set_optimizer_lr(self.critic_optimizer, config.CRITIC_LR * multiplier)
 
     def select_actions(self, observations: list[np.ndarray], exploration: bool) -> np.ndarray:
         obs_array: np.ndarray = np.array(observations, dtype=np.float32)
@@ -81,9 +66,6 @@ class MADDPG(MARLModel):
 
     def update(self, batch: ExperienceBatch) -> dict:
         assert isinstance(batch, dict), "MADDPG expects OffPolicyExperienceBatch (dict)"
-        self.update_counter += 1
-        self._apply_learning_rate_plateau(self.update_counter)
-
         obs_batch = batch["obs"]
         actions_batch = batch["actions"]
         rewards_batch = batch["rewards"]
@@ -182,7 +164,6 @@ class MADDPG(MARLModel):
                 "actor_optimizer": self.actor_optimizer.state_dict(),
                 "critic_optimizer": self.critic_optimizer.state_dict(),
                 "noise_scales": [noise.scale for noise in self.noise],
-                "update_counter": self.update_counter,
             },
             os.path.join(directory, "maddpg.pt"),
         )
@@ -239,7 +220,5 @@ class MADDPG(MARLModel):
         self.target_critic.load_state_dict(checkpoint["target_critic"])
         self.actor_optimizer.load_state_dict(checkpoint["actor_optimizer"])
         self.critic_optimizer.load_state_dict(checkpoint["critic_optimizer"])
-        self.update_counter = int(checkpoint.get("update_counter", 0))
-        self._apply_learning_rate_plateau(self.update_counter)
         for noise, scale in zip(self.noise, noise_scales):
             noise.scale = scale

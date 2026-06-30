@@ -8,7 +8,7 @@ python plot_comparison.py \
           model_test/comparison_data/summary_random.json \
   --labels AMASAC MASAC MATD3 MADDPG MAPPO Random
 
-   默认输出到 model_test/comparison_plots 目录下，自动生成 energy_latency_fairness.svg / .pdf。
+   默认输出到 model_test/comparison_plots 目录下，自动生成 energy_latency_fairness.svg / .pdf / .png。
 """
 import argparse
 import json
@@ -61,7 +61,6 @@ COLORS: tuple[str, ...] = (
 AXIS_COLOR = "#3D4852"
 GRID_COLOR = "#E3E8EF"
 TEXT_COLOR = "#263238"
-REQUIRED_METRICS: tuple[str, ...] = ("energy", "latency", "fairness")
 
 
 def _load_summary_averages(file_path: str) -> dict[str, float]:
@@ -72,8 +71,8 @@ def _load_summary_averages(file_path: str) -> dict[str, float]:
     if not isinstance(averages, dict):
         raise ValueError(f"{file_path} does not contain an 'averages' object")
 
-    result: dict[str, float] = {}
-    for metric in REQUIRED_METRICS:
+    result = {}
+    for metric in ("energy", "latency", "fairness"):
         if metric not in averages:
             raise ValueError(f"{file_path} is missing averages.{metric}")
         result[metric] = float(averages[metric])
@@ -92,26 +91,10 @@ def _paper_axes(ax) -> None:
 
 def _save_figure(fig, output_path: str) -> None:
     path_no_ext = os.path.splitext(output_path)[0]
-    for fmt in ("svg", "pdf"):
+    for fmt in ("svg", "pdf", "png"):
         out = f"{path_no_ext}.{fmt}"
         fig.savefig(out, format=fmt, **EXPORT_KWARGS)
         print(f"saved: {out}")
-
-
-def _remove_outer_frame(fig, ax) -> None:
-    fig.patch.set_edgecolor("none")
-    fig.patch.set_linewidth(0)
-    fig.patch.set_antialiased(False)
-    ax.patch.set_visible(False)
-    ax.patch.set_edgecolor("none")
-    ax.patch.set_linewidth(0)
-    ax.patch.set_antialiased(False)
-
-
-def _disable_clipping(ax) -> None:
-    for artist in ax.get_children():
-        if hasattr(artist, "set_clip_on"):
-            artist.set_clip_on(False)
 
 
 def _draw_full_grid(ax) -> None:
@@ -194,7 +177,6 @@ def plot_energy_latency_bubble(
 
     with plt.rc_context(CONFERENCE_STYLE):
         fig, ax = plt.subplots(figsize=(7.2, 5.4))
-        _remove_outer_frame(fig, ax)
 
         energy_margin = _value_margin(axis_energy_vals, ratio=0.18, minimum=5.0)
         lat_margin = _value_margin(axis_latency_vals, ratio=0.16, minimum=80.0)
@@ -356,7 +338,6 @@ def plot_energy_latency_bubble(
 
         os.makedirs(output_dir, exist_ok=True)
         fig.tight_layout()
-        _disable_clipping(ax)
         base_path = os.path.join(output_dir, "energy_latency_fairness")
         _save_figure(fig, base_path)
         plt.close(fig)
