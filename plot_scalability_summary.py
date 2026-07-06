@@ -1,5 +1,5 @@
 """Draw two compact scalability figures from UE-number test summaries.
-
+python plot_scalability_summary.py
 The script reads files named ``{ue}_{algorithm}_test_summary.json`` from
 ``test_logs`` and writes publication-ready latency and coverage figures to
 ``test_plots/scalability``.
@@ -156,7 +156,7 @@ def draw_metric_figure(
     ues = sorted({int(row["ue"]) for row in rows})
     algorithms = [algo for algo in ALGORITHM_ORDER if any(row["algorithm"] == algo for row in rows)]
 
-    fig, ax = plt.subplots(figsize=(7.2, 5.4), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(8, 6), constrained_layout=True)
     ax.set_axisbelow(True)
     ax.grid(True, which="major", color=GRID, linewidth=0.75, alpha=0.85)
     for side in ("left", "bottom"):

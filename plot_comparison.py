@@ -176,7 +176,7 @@ def plot_energy_latency_bubble(
         bubble_sizes = [0.5 * (min_bubble_size + max_bubble_size)]
 
     with plt.rc_context(CONFERENCE_STYLE):
-        fig, ax = plt.subplots(figsize=(7.2, 5.4))
+        fig, ax = plt.subplots(figsize=(8, 6))
 
         energy_margin = _value_margin(axis_energy_vals, ratio=0.18, minimum=5.0)
         lat_margin = _value_margin(axis_latency_vals, ratio=0.16, minimum=80.0)
