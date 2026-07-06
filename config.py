@@ -1,7 +1,7 @@
 import numpy as np
 
 # Training Parameters
-MODEL: str = "matd3"  # options: 'maddpg', 'matd3', 'mappo', 'masac', 'random'
+MODEL: str = "masac"  # options: 'maddpg', 'matd3', 'mappo', 'masac', 'random'
 SEED: int = 1234  # random seed for reproducibility
 
 # Initialize random state for config parameters to ensure reproducibility
@@ -49,7 +49,7 @@ UNSAFE_UAV_DISTANCE: float = 50.0
 COLLISION_DISTANCE: float = 5.0
 UNSAFE_PROXIMITY_PENALTY: float = 4.0
 COLLISION_FAILURE_PENALTY: float = 10.0
-BOUNDARY_PENALTY: float = 2.0
+BOUNDARY_PENALTY: float = 4.0
 NON_SERVED_LATENCY_PENALTY: float = 60.0  # penalty in latency for non-served requests
 # IMPORTANT : Reconfigurable, should try for various values including : NUM_UAVS - 1 and NUM_UES
 MAX_UAV_NEIGHBORS: int = min(4, NUM_UAVS - 1)
@@ -180,7 +180,7 @@ EPSILON: float = 1e-9  # small value to prevent division by zero
 # Off-policy algorithm hyperparameters
 REPLAY_BUFFER_SIZE: int = 6 * 10**5  # B，大概包含前500个episode的数据
 REPLAY_BATCH_SIZE: int = 1024  # minibatch size (increased from 64 for better GPU utilization)
-INITIAL_RANDOM_STEPS: int = 0  # steps of random actions for exploration
+INITIAL_RANDOM_STEPS: int = 40000  # steps of random actions for exploration
 LEARN_FREQ: int = 10  # steps to learn after
 
 # Gaussian Noise Parameters (for MADDPG and MATD3)
@@ -217,8 +217,8 @@ ATTENTION_COUNT_EMBED_DIM: int = 8  # embedding dim for normalized neighbor/UE c
 MASAC_ACTOR_LR: float = 1e-4
 MASAC_CRITIC_LR: float = 2e-4
 MASAC_UPDATE_FACTOR: float = 0.001
-MASAC_ATTENTION_ACTOR: bool = False  # enable local entity encoder in actor
-MASAC_CRITIC_MODE: str = "mlp"  # options: "mlp", "local_attention", "agent_self_attention"
+MASAC_ATTENTION_ACTOR: bool = True  # enable local entity encoder in actor
+MASAC_CRITIC_MODE: str = "local_attention"  # options: "mlp", "local_attention", "agent_self_attention"
 MASAC_AGENT_ID_DIM: int = 32  # agent identity embedding dimension
 MASAC_AGENT_ATTENTION_DIM: int = 512  # agent self-attention hidden dimension
 MASAC_AGENT_ATTENTION_HEADS: int = 4  # heads=4, head_dim=128
